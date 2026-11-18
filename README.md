@@ -129,7 +129,3 @@ scripts/      setup.mjs
 - **Map is blank:** `NEXT_PUBLIC_MAPBOX_TOKEN` is missing. Restart `npm run dev` after editing `.env.local`.
 - **Mobile "Network request failed":** `API_BASE_URL` points to `localhost`, which on a phone means the phone itself. Use your computer's LAN address.
 - **Mobile build fails on `google-services.json`:** the file must exist at `mobile/google-services.json`.
-
-## License
-
-No license has been chosen yet, so all rights are reserved.
