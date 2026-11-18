@@ -1,0 +1,21 @@
+# Local development database. Not for production.
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: civic
+      POSTGRES_PASSWORD: civic
+      POSTGRES_DB: civic_tracker
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - civic_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U civic -d civic_tracker"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  civic_pgdata:

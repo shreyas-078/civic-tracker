@@ -1,0 +1,93 @@
+{
+  "expo": {
+    "name": "CiviTrack",
+    "slug": "civictrack",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "civictrack",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0c0a07"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.civictrack.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "CiviTrack needs your location to show nearby civic issues and let you report problems in your area.",
+        "NSLocationAlwaysUsageDescription": "CiviTrack needs background location to notify you about issue resolutions near you.",
+        "NSCameraUsageDescription": "CiviTrack needs camera access to photograph civic issues for your report.",
+        "NSPhotoLibraryUsageDescription": "CiviTrack needs photo library access to attach images to your issue report."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0c0a07"
+      },
+      "package": "com.civictrack.app",
+      "googleServicesFile": "./google-services.json",
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.VIBRATE",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "CiviTrack needs your location to show nearby issues and send resolution notifications.",
+          "isAndroidBackgroundLocationEnabled": true
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow CiviTrack to access your camera to photograph civic issues."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow CiviTrack to access your photos for issue reports."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#f59e0b",
+          "sounds": []
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "bd271476-05a9-450c-bce3-4c877e18c855"
+      }
+    },
+    "owner": "shreysal78"
+  }
+}

@@ -1,0 +1,50 @@
+{
+    "name": "CiviTrack",
+    "short_name": "CiviTrack",
+    "description": "Report and track civic issues in your area",
+    "start_url": "/map",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#2563eb",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/icons/icon.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable any"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Report Issue",
+            "short_name": "Report",
+            "description": "Report a new civic issue",
+            "url": "/report",
+            "icons": [
+                {
+                    "src": "/icons/icon.png",
+                    "sizes": "512x512"
+                }
+            ]
+        },
+        {
+            "name": "View Map",
+            "short_name": "Map",
+            "description": "View issues on the map",
+            "url": "/map",
+            "icons": [
+                {
+                    "src": "/icons/icon.png",
+                    "sizes": "512x512"
+                }
+            ]
+        }
+    ],
+    "categories": [
+        "utilities",
+        "social"
+    ],
+    "related_applications": [],
+    "prefer_related_applications": false
+}

@@ -1,0 +1,371 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Auth (NextAuth adapter) ───────────────────────────────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+// ─── User ─────────────────────────────────────────────────────────────────────
+
+model User {
+  id            String   @id @default(cuid())
+  email         String?  @unique
+  emailVerified DateTime?
+  name          String?
+  image         String?
+  password      String?
+  role          UserRole @default(CITIZEN)
+  trustScore    Int      @default(50)
+  totalReports  Int      @default(0)
+  resolvedCount Int      @default(0)
+  isBlacklisted Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  accounts          Account[]
+  sessions          Session[]
+  issues            Issue[]          @relation("ReportedBy")
+  comments          Comment[]
+  votes             Vote[]
+  notifications     Notification[]
+  badges            Badge[]
+  ngo               NGO?
+  leaderboard       Leaderboard?
+  pushSubscriptions PushSubscription[]
+  expoPushTokens    ExpoPushToken[]
+  flags             Flag[]
+  resolutionVotes   ResolutionVote[]
+
+  @@map("users")
+}
+
+// ─── Issue ────────────────────────────────────────────────────────────────────
+
+model Issue {
+  id              String      @id @default(cuid())
+  title           String
+  description     String      @db.Text
+  category        Category    @default(OTHER)
+  status          IssueStatus @default(REPORTED)
+  priority        Int         @default(5)
+  lat             Float
+  lng             Float
+  address         String?
+  imageUrls       String[]
+  aiAnalysis      Json?
+  isDuplicate     Boolean     @default(false)
+  duplicateOfId   String?
+  isPersonal      Boolean     @default(false)
+  bounty          Int?
+  isFlagged       Boolean     @default(false)
+  flagCount       Int         @default(0)
+  reporterId      String
+  assignedNGOId   String?
+  resolvedAt      DateTime?
+  resolutionProof String[]
+  verifiedAt      DateTime?
+  deadline        DateTime?
+  expiresAt       DateTime?
+  upvotes         Int         @default(0)
+  downvotes       Int         @default(0)
+  viewCount       Int         @default(0)
+  overdueNotified Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  reporter      User          @relation("ReportedBy", fields: [reporterId], references: [id])
+  assignedNGO   NGO?          @relation(fields: [assignedNGOId], references: [id])
+  comments      Comment[]
+  votes         Vote[]
+  notifications Notification[]
+  flags           Flag[]
+  resolutionVotes ResolutionVote[]
+
+  @@index([status])
+  @@index([category])
+  @@index([reporterId])
+  @@index([lat, lng])
+  @@index([isPersonal])
+  @@index([isFlagged])
+  @@map("issues")
+}
+
+// ─── Comment ──────────────────────────────────────────────────────────────────
+
+model Comment {
+  id        String    @id @default(cuid())
+  content   String    @db.Text
+  issueId   String
+  authorId  String
+  parentId  String?
+  upvotes   Int       @default(0)
+  isDeleted Boolean   @default(false)
+  isFlagged Boolean   @default(false)
+  flagCount Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  issue   Issue     @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  author  User      @relation(fields: [authorId], references: [id])
+  parent  Comment?  @relation("Replies", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies Comment[] @relation("Replies")
+  flags   Flag[]
+
+  @@index([issueId])
+  @@index([authorId])
+  @@map("comments")
+}
+
+// ─── Vote ─────────────────────────────────────────────────────────────────────
+
+model Vote {
+  id        String   @id @default(cuid())
+  userId    String
+  issueId   String
+  value     Int      // +1 upvote, -1 downvote
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, issueId])
+  @@map("votes")
+}
+
+// ─── NGO ──────────────────────────────────────────────────────────────────────
+
+model NGO {
+  id             String    @id @default(cuid())
+  name           String
+  description    String    @db.Text
+  website        String?
+  phone          String?
+  proofUrl       String?
+  categories     Category[]
+  status         NGOStatus @default(PENDING)
+  userId         String    @unique
+  blacklistNote  String?
+  approvedAt     DateTime?
+  resolvedCount  Int       @default(0)
+  unresolvedCount Int      @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  user   User    @relation(fields: [userId], references: [id])
+  issues Issue[]
+
+  @@map("ngos")
+}
+
+// ─── Notification ─────────────────────────────────────────────────────────────
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  issueId   String?
+  type      NotificationType
+  title     String
+  body      String
+  isRead    Boolean          @default(false)
+  actionUrl String?
+  createdAt DateTime         @default(now())
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  issue Issue? @relation(fields: [issueId], references: [id])
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+// ─── Badge ────────────────────────────────────────────────────────────────────
+
+model Badge {
+  id        String    @id @default(cuid())
+  userId    String
+  type      BadgeType
+  awardedAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type])
+  @@map("badges")
+}
+
+// ─── Leaderboard ──────────────────────────────────────────────────────────────
+
+model Leaderboard {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  score        Int      @default(0)
+  rank         Int?
+  weeklyScore  Int      @default(0)
+  monthlyScore Int      @default(0)
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("leaderboard")
+}
+
+// ─── Push Subscription ────────────────────────────────────────────────────────
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("push_subscriptions")
+}
+
+// ─── Expo Push Token (mobile) ──────────────────────────────────────────────────
+
+model ExpoPushToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  lat       Float?   // Last known latitude for proximity notifications
+  lng       Float?   // Last known longitude for proximity notifications
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([lat, lng])
+  @@map("expo_push_tokens")
+}
+
+// ─── Resolution Vote (community verification with proximity) ──────────────────
+
+model ResolutionVote {
+  id        String   @id @default(cuid())
+  userId    String
+  issueId   String
+  vote      String   // YES, NO, IDK
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, issueId])
+  @@index([issueId])
+  @@map("resolution_votes")
+}
+
+// ─── Flag ─────────────────────────────────────────────────────────────────────
+
+model Flag {
+  id        String      @id @default(cuid())
+  userId    String
+  issueId   String?
+  commentId String?
+  reason    String?
+  createdAt DateTime    @default(now())
+
+  user    User     @relation(fields: [userId], references: [id])
+  issue   Issue?   @relation(fields: [issueId], references: [id])
+  comment Comment? @relation(fields: [commentId], references: [id])
+
+  @@unique([userId, issueId])
+  @@unique([userId, commentId])
+  @@map("flags")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  CITIZEN
+  NGO
+  ADMIN
+}
+
+enum IssueStatus {
+  REPORTED
+  VERIFIED
+  ASSIGNED
+  RESOLVED
+  CLOSED
+}
+
+enum Category {
+  ROAD
+  WATER
+  ELECTRICITY
+  SANITATION
+  PUBLIC_SPACE
+  ENVIRONMENT
+  LOST_FOUND
+  OTHER
+}
+
+enum NGOStatus {
+  PENDING
+  APPROVED
+  BLACKLISTED
+}
+
+enum NotificationType {
+  ISSUE_VERIFIED
+  ISSUE_ASSIGNED
+  ISSUE_RESOLVED
+  RESOLUTION_VERIFY_REQUEST
+  RESOLUTION_NEARBY_CHECK
+  RESOLUTION_DEADLINE_CHECK
+  COMMENT_REPLY
+  VOTE_MILESTONE
+  BADGE_AWARDED
+  NGO_APPLICATION_UPDATE
+  DEADLINE_WARNING
+  DUPLICATE_DETECTED
+}
+
+enum BadgeType {
+  FIRST_REPORT
+  TEN_REPORTS
+  FIFTY_REPORTS
+  VERIFIED_SOLVER
+  COMMUNITY_HERO
+  SPEEDY_REPORTER
+  NGO_PARTNER
+  FAST_RESOLVER
+  TOP_NGO
+}
